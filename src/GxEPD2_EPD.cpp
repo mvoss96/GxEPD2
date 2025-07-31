@@ -32,6 +32,7 @@ GxEPD2_EPD::GxEPD2_EPD(int16_t cs, int16_t dc, int16_t rst, int16_t busy, int16_
   _reset_duration = 10;
   _busy_callback = 0;
   _busy_callback_parameter = 0;
+  _wait_busy_function = 0;
 }
 
 void GxEPD2_EPD::init(uint32_t serial_diag_bitrate)
@@ -100,6 +101,11 @@ void GxEPD2_EPD::setBusyCallback(void (*busyCallback)(const void*), const void* 
   _busy_callback_parameter = busy_callback_parameter;
 }
 
+void GxEPD2_EPD::setWaitBusyFunction(void (*wait_busy_function)())
+{
+  _wait_busy_function = wait_busy_function;
+}
+
 void GxEPD2_EPD::selectSPI(SPIClass& spi, SPISettings spi_settings)
 {
   _pSPIx = &spi;
@@ -136,6 +142,12 @@ void GxEPD2_EPD::_reset()
 
 void GxEPD2_EPD::_waitWhileBusy(const char* comment, uint16_t busy_time)
 {
+  if (_wait_busy_function)
+  {
+    _wait_busy_function();
+    return;
+  }
+  
   if (_busy >= 0)
   {
     delay(1); // add some margin to become active
